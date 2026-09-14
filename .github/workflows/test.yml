@@ -1,0 +1,132 @@
+name: Test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  install:
+    name: Install (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - ubuntu-24.04-arm
+          - macos-latest
+          - macos-15-intel
+          - windows-latest
+          - windows-11-arm
+    steps:
+      - uses: actions/checkout@v7
+
+      - id: stagelint
+        uses: ./
+        with:
+          install-only: true
+
+      - name: Check stagelint is on PATH
+        shell: bash
+        run: test "$(stagelint --version)" = "stagelint ${{ steps.stagelint.outputs.version }}"
+
+  version:
+    name: Version (${{ matrix.version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - version: 0.1.6
+            expected: 0.1.6
+          - version: v0.1.6
+            expected: 0.1.6
+          - version: '>=0.1.4 <0.1.6'
+            expected: 0.1.5
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./
+        with:
+          version: ${{ matrix.version }}
+          install-only: true
+
+      - name: Check the installed version
+        run: test "$(stagelint --version)" = "stagelint ${{ matrix.expected }}"
+
+  run:
+    name: Run (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: unformatted
+            content: hello
+            outcome: failure
+          - name: formatted
+            content: HELLO
+            outcome: success
+          - name: fail-on-changes disabled
+            content: hello
+            fail-on-changes: 'false'
+            outcome: success
+            fixed: true
+          - name: args and workdir
+            content: hello
+            args: --files file.txt
+            workdir: test
+            outcome: failure
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+        with:
+          cache: true
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: package.json
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Commit a file for stagelint to check
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          mkdir test
+          cat > test/.stagelint.yml <<'EOF'
+          '*.txt': sh -c 'for f; do tr a-z A-Z < "$f" > "$f.tmp" && mv "$f.tmp" "$f"; done' --
+          EOF
+          echo '${{ matrix.content }}' > test/file.txt
+          git add test
+          git commit --no-verify -m 'test: add file'
+
+      - id: stagelint
+        uses: ./
+        continue-on-error: true
+        with:
+          args: ${{ matrix.args }}
+          workdir: ${{ matrix.workdir || '.' }}
+          fail-on-changes: ${{ matrix.fail-on-changes || 'true' }}
+
+      - name: Check the outcome
+        run: test '${{ steps.stagelint.outcome }}' = '${{ matrix.outcome }}'
+
+      - name: Check the file was fixed
+        if: matrix.fixed
+        run: test "$(cat test/file.txt)" = HELLO
