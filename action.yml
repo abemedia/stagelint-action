@@ -1,0 +1,33 @@
+name: stagelint
+description: Run linters and formatters on the files a pull request or push changed
+author: abemedia
+branding:
+  icon: check-circle
+  color: green
+
+inputs:
+  version:
+    description: Version or semver range of stagelint to install
+    default: latest
+  args:
+    description: Arguments to run stagelint with, instead of the files the triggering event changed
+  workdir:
+    description: Directory to run stagelint in
+    default: .
+  install-only:
+    description: Only install stagelint and add it to PATH
+    default: 'false'
+  fail-on-changes:
+    description: Fail when a command changed a file
+    default: 'true'
+  github-token:
+    description: Token used to look up stagelint releases
+    default: ${{ github.token }}
+
+outputs:
+  version:
+    description: The installed stagelint version
+
+runs:
+  using: node24
+  main: dist/main.mjs
