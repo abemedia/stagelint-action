@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "files": {
-    "includes": ["**", "!dist"]
+    "includes": ["**", "!dist", "!pnpm-lock.yaml"]
   },
   "formatter": {
     "indentStyle": "space",
@@ -11,6 +11,16 @@
     "formatter": {
       "quoteStyle": "single",
       "semicolons": "asNeeded"
+    }
+  },
+  "markdown": {
+    "formatter": {
+      "proseWrap": "always"
+    }
+  },
+  "yaml": {
+    "formatter": {
+      "quoteStyle": "single"
     }
   },
   "vcs": {
