@@ -130,3 +130,14 @@ jobs:
       - name: Check the file was fixed
         if: matrix.fixed
         run: test "$(cat test/file.txt)" = HELLO
+
+  test:
+    name: Test
+    if: always()
+    needs: [install, version, run]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check all tests passed
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
