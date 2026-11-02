@@ -1,7 +1,5 @@
 '*': biome check --write --files-ignore-unknown=true --no-errors-on-unmatched
 
-'*.{md,yml,yaml}': prettier --write
-
 '*.ts':
   command: tsc
   pass_filenames: false
