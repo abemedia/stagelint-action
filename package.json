@@ -19,12 +19,12 @@
     "@sigstore/bundle": "5.0.0",
     "@sigstore/tuf": "5.0.0",
     "@sigstore/verify": "4.1.2",
-    "@stagelint/stagelint": "0.1.6",
-    "@types/node": "24.13.4",
+    "@stagelint/stagelint": "0.2.1",
+    "@types/node": "24.19.2",
     "@types/semver": "7.8.0",
-    "rolldown-license-plugin": "3.0.11",
+    "rolldown-license-plugin": "3.0.14",
     "semver": "7.8.5",
-    "tsdown": "0.23.0",
+    "tsdown": "0.23.2",
     "typescript": "7.0.2"
   }
 }
